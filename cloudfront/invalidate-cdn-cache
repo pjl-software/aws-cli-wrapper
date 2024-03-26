@@ -1,0 +1,60 @@
+#!/bin/bash#!/usr/bin/env bash
+
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+ENV_CONFIG_FILE="${SCRIPT_DIR}/../.env"
+
+#
+. "${ENV_CONFIG_FILE}"
+
+############################################################
+# Help                                                     #
+############################################################
+help() {
+    echo ""
+    echo -e "Method for invalidating the AWS CloudFront CDN cache using the distribution ID parameter or env parameter." | fmt
+    echo
+    echo -e "Link: https://us-east-1.console.aws.amazon.com/cloudfront/v4/home?region=us-east-2#/distributions" | fmt
+    echo
+    echo -e "Usage: $0 [-h] [-c cloudFront ID]" | fmt
+    echo -e "\t-h\t Display this help message" | fmt
+    echo -e "\t-c\t CloudFront ID" | fmt
+    echo ""
+    echo ""
+}
+
+############################################################
+############################################################
+# Main Program                                             #
+############################################################
+############################################################
+
+while getopts ":hc:" opt; do
+    case $opt in
+    h)
+        help
+        exit 0
+        ;;
+    c)
+        CLOUDFRONT_ID=${OPTARG}
+        ;;
+    \?)
+        echo "Invalid option: -$OPTARG" >&2
+        help
+        exit 1
+        ;;
+    :)
+        echo ""
+        echo "Option -$OPTARG requires an argument." >&2
+        help
+        exit 1
+        ;;
+    esac
+done
+
+requiredOptionCheck "${CLOUDFRONT_ID}" "c"
+
+echo
+echo "Attempting to invalidate cloudfront ID: ${CLOUDFRONT_ID}" >&2
+echo
+
+aws cloudfront create-invalidation --distribution-id "${CLOUDFRONT_ID}" --paths "/*"
